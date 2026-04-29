@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Point do Sol 103 — Cardápio Digital</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(180deg, #FFF8DC 0%, #FFFAF0 100%);
+    color: #2A1B5C;
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+  /* Tela de bloqueio */
+  .tela-bloqueio {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(42,27,92,0.95);
+    z-index: 9999;
+    flex-direction: column; align-items: center; justify-content: center;
+    color: white; text-align: center; padding: 2rem;
+  }
+  .tela-bloqueio.show { display: flex; }
+  .tela-bloqueio h2 { font-size: 1.6rem; margin-bottom: 1rem; color: #FFD700; }
+  .tela-bloqueio p { font-size: 1rem; margin-bottom: 1.5rem; max-width: 400px; }
+  .tela-bloqueio a {
+    background: #FFD700; color: #2A1B5C;
+    padding: 12px 28px; border-radius: 30px;
+    text-decoration: none; font-weight: bold;
+    display: inline-block; margin-top: 0.5rem;
+  }
+  .bloqueio-email { margin-top: 1rem; font-size: 0.85rem; opacity: 0.85; }
+
+  /* Admin bar */
+  .admin-bar {
+    display: none;
+    background: #FFD700; color: #2A1B5C;
+    text-align: center; padding: 10px;
+    font-weight: bold; font-size: 0.9rem;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .admin-bar.show { display: block; }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #2A1B5C 0%, #4B2A8C 100%);
+    padding: 2rem 1rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 80px; height: 80px;
+    background-image: radial-gradient(circle, #FFD700 2px, transparent 2px);
+    background-size: 12px 12px;
+    opacity: 0.4;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -10px; left: -10px;
+    width: 80px; height: 80px;
+    background-image: radial-gradient(circle, #FFD700 2px, transparent 2px);
+    background-size: 12px 12px;
+    opacity: 0.3;
+  }
+  .header-logo {
+    width: 110px; height: 110px;
+    background: #FFD700;
+    border-radius: 50%;
+    margin: 0 auto 0.8rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.2rem;
+    border: 4px solid #FFEB3B;
+    box-shadow: 0 0 30px rgba(255,215,0,0.4);
+    position: relative; z-index: 2;
+  }
+  .header-titulo {
+    color: #FFD700;
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative; z-index: 2;
+  }
+  .header-numero {
+    color: #FFEB3B;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-top: 0.2rem;
+    position: relative; z-index: 2;
+  }
+  .header-slogan {
+    color: white;
+    font-size: 0.85rem;
+    margin-top: 0.6rem;
+    opacity: 0.9;
+    position: relative; z-index: 2;
+  }
+  .header-endereco {
+    color: white;
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    opacity: 0.85;
+    position: relative; z-index: 2;
+  }
+  .lang-bar {
+    display: flex; flex-wrap: wrap;
+    justify-content: center; gap: 6px;
+    margin-top: 1rem;
+    position: relative; z-index: 2;
+  }
+  .lang-btn {
+    background: rgba(255,215,0,0.2);
+    border: 1px solid #FFD700;
+    color: #FFD700;
+    padding: 6px 12px; border-radius: 20px;
+    font-size: 0.78rem; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .lang-btn:hover, .lang-btn.active {
+    background: #FFD700; color: #2A1B5C;
+    font-weight: bold;
+  }
+
+  /* Container & categorias */
+  .container { max-width: 720px; margin: 1.5rem auto; padding: 0 1rem; }
+  .categoria-titulo {
+    color: #2A1B5C;
+    font-size: 1.3rem;
+    font-weight: 900;
+    margin: 1.5rem 0 0.8rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 3px solid #FFD700;
+    letter-spacing: 0.05em;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .categoria-titulo::before {
+    content: '☀️';
+    font-size: 1.4rem;
+  }
+
+  /* Cards */
+  .produto-card {
+    background: white;
+    border-radius: 14px;
+    padding: 0.9rem;
+    margin-bottom: 0.7rem;
+    display: flex; align-items: center; gap: 0.9rem;
+    box-shadow: 0 2px 12px rgba(42,27,92,0.08);
+    border-left: 4px solid #FFD700;
+    transition: transform 0.2s;
+    animation: fadeUp 0.4s ease backwards;
+  }
+  .produto-card:hover { transform: translateX(3px); }
+  .produto-card.inativo { opacity: 0.45; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .produto-img, .produto-img-placeholder {
+    width: 70px; height: 70px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    object-fit: cover;
+  }
+  .produto-img-placeholder {
+    background: linear-gradient(135deg, #FFD700, #FFEB3B);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+  }
+  .produto-info { flex: 1; min-width: 0; }
+  .produto-nome {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #2A1B5C;
+    margin-bottom: 2px;
+  }
+  .produto-comp {
+    font-size: 0.82rem;
+    color: #666;
+    line-height: 1.3;
+  }
+  .produto-comp-principal {
+    color: #2A1B5C;
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+  .produto-comp-pt {
+    color: #999;
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-top: 2px;
+  }
+  .esgotado {
+    display: inline-block;
+    background: #d32f2f; color: white;
+    padding: 2px 8px; border-radius: 10px;
+    font-size: 0.7rem; font-weight: bold;
+    margin-top: 4px;
+  }
+  .produto-preco {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #2A1B5C;
+    background: #FFD700;
+    padding: 4px 10px; border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  /* Toggle admin */
+  .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #ccc; transition: .3s; border-radius: 24px;
+  }
+  .toggle-slider::before {
+    position: absolute; content: "";
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background: white; transition: .3s; border-radius: 50%;
+  }
+  .toggle input:checked + .toggle-slider { background: #4CAF50; }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+  /* Carrinho/Pedido */
+  .btn-pedido {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background: #FFD700; color: #2A1B5C;
+    border: 3px solid #2A1B5C;
+    padding: 14px 22px;
+    border-radius: 50px;
+    font-weight: 900; font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(42,27,92,0.4);
+    z-index: 50;
+    display: none;
+  }
+  .btn-pedido.show { display: block; animation: pulse 1.5s infinite; }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .qtd-btn {
+    background: #2A1B5C; color: #FFD700;
+    border: none; width: 28px; height: 28px;
+    border-radius: 50%; font-weight: bold; font-size: 1rem;
+    cursor: pointer;
+  }
+  .qtd-display {
+    display: inline-block; min-width: 24px;
+    text-align: center; font-weight: bold;
+    color: #2A1B5C;
+  }
+
+  /* Modal pedido */
+  .modal-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-pedido {
+    background: white;
+    border-radius: 16px;
+    max-width: 420px; width: 100%;
+    max-height: 85vh; overflow-y: auto;
+    padding: 1.5rem;
+  }
+  .modal-pedido h2 {
+    color: #2A1B5C;
+    border-bottom: 3px solid #FFD700;
+    padding-bottom: 0.5rem; margin-bottom: 1rem;
+  }
+  .item-pedido {
+    display: flex; justify-content: space-between;
+    padding: 0.5rem 0; border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+  }
+  .total-pedido {
+    font-size: 1.2rem; font-weight: 900;
+    color: #2A1B5C; text-align: right;
+    margin-top: 1rem; padding-top: 0.8rem;
+    border-top: 2px solid #FFD700;
+  }
+  .modal-pedido input {
+    width: 100%; padding: 10px;
+    border: 2px solid #2A1B5C;
+    border-radius: 8px; margin: 8px 0;
+    font-size: 1rem;
+  }
+  .modal-pedido label {
+    display: block; margin-top: 0.8rem;
+    font-weight: bold; color: #2A1B5C;
+    font-size: 0.9rem;
+  }
+  .modal-btns { display: flex; gap: 8px; margin-top: 1rem; }
+  .btn-confirmar, .btn-cancelar {
+    flex: 1; padding: 12px;
+    border: none; border-radius: 8px;
+    font-weight: bold; cursor: pointer;
+    font-size: 0.95rem;
+  }
+  .btn-confirmar { background: #FFD700; color: #2A1B5C; }
+  .btn-cancelar { background: #ccc; color: #333; }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    color: #2A1B5C;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+    border-top: 2px solid #FFD700;
+  }
+  footer strong { color: #2A1B5C; font-size: 1rem; }
+  .pix-info {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+
+<!-- Tela de bloqueio (trial expirado) -->
+<div class="tela-bloqueio" id="telaBloqueio">
+  <h2>⏰ Período de teste encerrado</h2>
+  <p>O período de teste gratuito desta barraca foi encerrado. Para continuar utilizando o cardápio digital, entre em contato:</p>
+  <a href="https://wa.me/5521999999999" target="_blank">💬 Falar no WhatsApp</a>
+  <div class="bloqueio-email">f.gomesnascimento@icloud.com</div>
+</div>
+
+<div class="admin-bar" id="adminBar">🔧 Modo <span>Administrador</span> — ative ou desative produtos abaixo</div>
+
+<header>
+  <div class="header-logo">😎</div>
+  <div class="header-titulo">POINT DO SOL</div>
+  <div class="header-numero">— 103 —</div>
+  <div class="header-slogan">Sol, mar e o melhor da praia</div>
+  <div class="header-endereco">Barraca 103 — Rio de Janeiro / RJ</div>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('pt')">🇧🇷 PT</button>
+    <button class="lang-btn" onclick="setLang('en')">🇺🇸 EN</button>
+    <button class="lang-btn" onclick="setLang('es')">🇪🇸 ES</button>
+    <button class="lang-btn" onclick="setLang('fr')">🇫🇷 FR</button>
+    <button class="lang-btn" onclick="setLang('it')">🇮🇹 IT</button>
+    <button class="lang-btn" onclick="setLang('de')">🇩🇪 DE</button>
+    <button class="lang-btn" onclick="setLang('zh')">🇨🇳 ZH</button>
+    <button class="lang-btn" onclick="setLang('ja')">🇯🇵 JA</button>
+  </div>
+</header>
+
+<div class="container" id="cardapio"></div>
+
+<button class="btn-pedido" id="btnPedido" onclick="abrirModalPedido()">🛒 <span id="contadorPedido">0</span> — Fazer pedido</button>
+
+<!-- Modal de pedido -->
+<div class="modal-overlay" id="modalPedido">
+  <div class="modal-pedido">
+    <h2>🛎️ Confirmar pedido</h2>
+    <div id="listaPedido"></div>
+    <div class="total-pedido" id="totalPedido">Total: R$ 0,00</div>
+    <label>Número da cadeira/mesa:</label>
+    <input type="text" id="inputCadeira" placeholder="Ex: 12" inputmode="numeric">
+    <label>Seu nome (opcional):</label>
+    <input type="text" id="inputNome" placeholder="Ex: João">
+    <div class="modal-btns">
+      <button class="btn-cancelar" onclick="fecharModalPedido()">Cancelar</button>
+      <button class="btn-confirmar" onclick="enviarPedido()">Enviar pedido</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <strong>POINT DO SOL 103</strong><br>
+  Barraca 103 — Rio de Janeiro / RJ
+  <div class="pix-info">PIX (CNPJ): 48.177.641/0001-42</div>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAX6X6ZX__HxwamgN4wcx8p1jgoQUEWtjE",
+  authDomain: "cardapio-digital-73474.firebaseapp.com",
+  databaseURL: "https://cardapio-digital-73474-default-rtdb.firebaseio.com",
+  projectId: "cardapio-digital-73474",
+  storageBucket: "cardapio-digital-73474.firebasestorage.app",
+  messagingSenderId: "950292544322",
+  appId: "1:950292544322:web:1432db52ebb3add23366db"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const isAdmin = new URLSearchParams(window.location.search).get('admin') === 'pointsol103';
+const DB_KEY = 'point-do-sol-103';
+
+// Lista de produtos — preços iguais aos da Vivia 98 (barraqueiro ajusta no painel)
+const produtos = [
+  // BEBIDAS / DRINKS
+  { categoria: "Bebidas", nome: "Brahma / Skol / Antarctica", pt: "Cerveja nacional latão 473ml", en: "National beer can 473ml", es: "Cerveza nacional lata 473ml", fr: "Bière nationale canette 473ml", it: "Birra nazionale lattina 473ml", de: "Nationales Bier Dose 473ml", zh: "国产啤酒罐装 473毫升", ja: "国産ビール 473ml缶", preco: 15.00, emoji: "🍺", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Budweiser latão", pt: "Cerveja Budweiser 473ml", en: "Budweiser beer 473ml", es: "Cerveza Budweiser 473ml", fr: "Bière Budweiser 473ml", it: "Birra Budweiser 473ml", de: "Budweiser Bier 473ml", zh: "百威啤酒 473毫升", ja: "バドワイザー 473ml", preco: 15.00, emoji: "🍺", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Original latão", pt: "Cerveja Original 473ml", en: "Original beer 473ml", es: "Cerveza Original 473ml", fr: "Bière Original 473ml", it: "Birra Original 473ml", de: "Original Bier 473ml", zh: "Original啤酒 473毫升", ja: "オリジナルビール 473ml", preco: 15.00, emoji: "🍺", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Amstel latão", pt: "Cerveja Amstel 473ml", en: "Amstel beer 473ml", es: "Cerveza Amstel 473ml", fr: "Bière Amstel 473ml", it: "Birra Amstel 473ml", de: "Amstel Bier 473ml", zh: "Amstel啤酒 473毫升", ja: "アムステルビール 473ml", preco: 15.00, emoji: "🍺", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Heineken latão", pt: "Cerveja Heineken 473ml", en: "Heineken beer 473ml", es: "Cerveza Heineken 473ml", fr: "Bière Heineken 473ml", it: "Birra Heineken 473ml", de: "Heineken Bier 473ml", zh: "喜力啤酒 473毫升", ja: "ハイネケン 473ml", preco: 20.00, emoji: "🍺", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Energético", pt: "Red Bull, Monster ou similar", en: "Energy drink: Red Bull, Monster", es: "Bebida energética: Red Bull, Monster", fr: "Boisson énergisante: Red Bull, Monster", it: "Bevanda energetica: Red Bull, Monster", de: "Energy Drink: Red Bull, Monster", zh: "红牛、Monster或类似品", ja: "レッドブル、モンスター等", preco: 15.00, emoji: "⚡", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Coca-Cola", pt: "Refrigerante Coca-Cola lata 350ml", en: "Coca-Cola soda can 350ml", es: "Refresco Coca-Cola lata 350ml", fr: "Soda Coca-Cola canette 350ml", it: "Bibita Coca-Cola lattina 350ml", de: "Coca-Cola Erfrischungsgetränk 350ml", zh: "可口可乐易拉罐 350毫升", ja: "コカ・コーラ缶 350ml", preco: 8.00, emoji: "🥤", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Guaraná Antarctica", pt: "Refrigerante Guaraná lata 350ml", en: "Guaraná soda can 350ml", es: "Refresco Guaraná lata 350ml", fr: "Soda Guaraná canette 350ml", it: "Bibita Guaraná lattina 350ml", de: "Guaraná Erfrischungsgetränk 350ml", zh: "瓜拉那汽水易拉罐 350毫升", ja: "ガラナ缶 350ml", preco: 8.00, emoji: "🥤", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Guaraviton", pt: "Bebida de guaraná natural", en: "Natural guaraná drink", es: "Bebida de guaraná natural", fr: "Boisson de guaraná naturel", it: "Bevanda di guaraná naturale", de: "Natürliches Guaraná-Getränk", zh: "天然瓜拉那饮料", ja: "天然ガラナドリンク", preco: 10.00, emoji: "🍶", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Água sem gás", pt: "Água mineral sem gás 500ml", en: "Still mineral water 500ml", es: "Agua mineral sin gas 500ml", fr: "Eau minérale plate 500ml", it: "Acqua minerale naturale 500ml", de: "Stilles Mineralwasser 500ml", zh: "无气矿泉水 500毫升", ja: "ミネラルウォーター 500ml", preco: 5.00, emoji: "💧", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Água com gás", pt: "Água mineral com gás 500ml", en: "Sparkling mineral water 500ml", es: "Agua mineral con gas 500ml", fr: "Eau minérale gazeuse 500ml", it: "Acqua minerale frizzante 500ml", de: "Mineralwasser mit Kohlensäure 500ml", zh: "气泡矿泉水 500毫升", ja: "炭酸水 500ml", preco: 5.00, emoji: "💧", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "H2OH!", pt: "Refrigerante H2OH! 500ml", en: "H2OH! drink 500ml", es: "Bebida H2OH! 500ml", fr: "Boisson H2OH! 500ml", it: "Bevanda H2OH! 500ml", de: "H2OH! Getränk 500ml", zh: "H2OH!汽水 500毫升", ja: "H2OH! 500ml", preco: 8.00, emoji: "🥤", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Suco natural", pt: "Suco de fruta natural — sabores diversos", en: "Natural fruit juice — various flavors", es: "Jugo natural de frutas — varios sabores", fr: "Jus de fruits naturel — saveurs variées", it: "Succo di frutta naturale — vari gusti", de: "Natürlicher Fruchtsaft — verschiedene Sorten", zh: "天然果汁 — 多种口味", ja: "天然フルーツジュース — 各種フレーバー", preco: 15.00, emoji: "🧃", img: "", ativo: true },
+  { categoria: "Bebidas", nome: "Côco verde", pt: "Côco verde gelado", en: "Fresh green coconut", es: "Coco verde frío", fr: "Noix de coco verte fraîche", it: "Cocco verde fresco", de: "Frische grüne Kokosnuss", zh: "冰镇椰子", ja: "冷たい青ココナッツ", preco: 12.00, emoji: "🥥", img: "", ativo: true },
+
+  // DRINKS / COCKTAILS
+  { categoria: "Drinks", nome: "Caipirinha", pt: "Cachaça, limão, açúcar e gelo", en: "Cachaça, lime, sugar and ice", es: "Cachaza, lima, azúcar y hielo", fr: "Cachaça, citron vert, sucre et glace", it: "Cachaça, lime, zucchero e ghiaccio", de: "Cachaça, Limette, Zucker und Eis", zh: "卡莎萨酒、青柠、糖和冰", ja: "カシャーサ、ライム、砂糖、氷", preco: 30.00, emoji: "🍹", img: "", ativo: true },
+  { categoria: "Drinks", nome: "Caipivodka", pt: "Vodka, limão, açúcar e gelo", en: "Vodka, lime, sugar and ice", es: "Vodka, lima, azúcar y hielo", fr: "Vodka, citron vert, sucre et glace", it: "Vodka, lime, zucchero e ghiaccio", de: "Wodka, Limette, Zucker und Eis", zh: "伏特加、青柠、糖和冰", ja: "ウォッカ、ライム、砂糖、氷", preco: 30.00, emoji: "🍸", img: "", ativo: true },
+  { categoria: "Drinks", nome: "Gin tônica", pt: "Gin, água tônica e limão", en: "Gin, tonic water and lime", es: "Gin, agua tónica y lima", fr: "Gin, eau tonique et citron vert", it: "Gin, acqua tonica e lime", de: "Gin, Tonic Water und Limette", zh: "金酒、汤力水和青柠", ja: "ジン、トニックウォーター、ライム", preco: 35.00, emoji: "🍸", img: "", ativo: true },
+  { categoria: "Drinks", nome: "Piña Colada", pt: "Rum, leite de côco, abacaxi e gelo", en: "Rum, coconut milk, pineapple and ice", es: "Ron, leche de coco, piña y hielo", fr: "Rhum, lait de coco, ananas et glace", it: "Rum, latte di cocco, ananas e ghiaccio", de: "Rum, Kokosmilch, Ananas und Eis", zh: "朗姆酒、椰奶、菠萝和冰", ja: "ラム、ココナッツミルク、パイナップル、氷", preco: 35.00, emoji: "🍍", img: "", ativo: true },
+  { categoria: "Drinks", nome: "Mojito", pt: "Rum, hortelã, limão, açúcar e soda", en: "Rum, mint, lime, sugar and soda", es: "Ron, menta, lima, azúcar y soda", fr: "Rhum, menthe, citron vert, sucre et soda", it: "Rum, menta, lime, zucchero e soda", de: "Rum, Minze, Limette, Zucker und Soda", zh: "朗姆酒、薄荷、青柠、糖和苏打水", ja: "ラム、ミント、ライム、砂糖、ソーダ", preco: 35.00, emoji: "🌿", img: "", ativo: true },
+
+  // PETISCOS / SNACKS
+  { categoria: "Petiscos", nome: "Aipim frito", pt: "Aipim frito crocante com molho", en: "Crispy fried cassava with sauce", es: "Yuca frita crujiente con salsa", fr: "Manioc frit croustillant avec sauce", it: "Manioca fritta croccante con salsa", de: "Knusprig gebratene Maniok mit Sauce", zh: "酥脆炸木薯配酱料", ja: "カリカリ揚げキャッサバとソース", preco: 35.00, emoji: "🍟", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Batata frita", pt: "Porção de batata frita crocante", en: "Crispy french fries portion", es: "Porción de papas fritas crujientes", fr: "Portion de frites croustillantes", it: "Porzione di patatine fritte croccanti", de: "Portion knusprige Pommes frites", zh: "一份酥脆薯条", ja: "カリカリポテトフライ", preco: 35.00, emoji: "🍟", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Camarão frito", pt: "Camarão frito empanado", en: "Fried breaded shrimp", es: "Camarón frito empanizado", fr: "Crevettes panées frites", it: "Gamberi fritti impanati", de: "Frittierte panierte Garnelen", zh: "炸面包虾", ja: "揚げパン粉エビ", preco: 180.00, emoji: "🦐", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Camarão empanado", pt: "Camarão empanado com molho rosé", en: "Breaded shrimp with rosé sauce", es: "Camarón empanizado con salsa rosa", fr: "Crevettes panées avec sauce rosée", it: "Gamberi impanati con salsa rosata", de: "Panierte Garnelen mit Rosé-Sauce", zh: "面包虾配玫瑰酱", ja: "パン粉エビとロゼソース", preco: 180.00, emoji: "🦐", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Frango a passarinho", pt: "Frango frito em pedaços com alho", en: "Fried chicken pieces with garlic", es: "Pollo frito en trozos con ajo", fr: "Morceaux de poulet frit à l'ail", it: "Pezzi di pollo fritto con aglio", de: "Gebratene Hähnchenstücke mit Knoblauch", zh: "蒜香炸鸡块", ja: "ガーリック揚げチキン", preco: 60.00, emoji: "🍗", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Filé mignon com fritas", pt: "Filé mignon grelhado com batata frita", en: "Grilled filet mignon with french fries", es: "Filete mignon a la parrilla con papas fritas", fr: "Filet mignon grillé avec frites", it: "Filetto di manzo alla griglia con patatine", de: "Gegrilltes Filet Mignon mit Pommes", zh: "烤菲力牛排配薯条", ja: "グリルフィレミニョンとフライドポテト", preco: 130.00, emoji: "🥩", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Gurjão de frango", pt: "Iscas de frango empanadas", en: "Breaded chicken strips", es: "Tiras de pollo empanizadas", fr: "Lanières de poulet panées", it: "Strisce di pollo impanate", de: "Panierte Hähnchenstreifen", zh: "炸面包鸡条", ja: "パン粉揚げチキンストリップ", preco: 60.00, emoji: "🍗", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Gurjão de peixe", pt: "Iscas de peixe empanadas", en: "Breaded fish strips", es: "Tiras de pescado empanizadas", fr: "Lanières de poisson panées", it: "Strisce di pesce impanate", de: "Panierte Fischstreifen", zh: "炸面包鱼条", ja: "パン粉揚げ魚ストリップ", preco: 140.00, emoji: "🐟", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Linguiça calabresa com fritas", pt: "Linguiça calabresa acebolada com fritas", en: "Calabresa sausage with onions and fries", es: "Salchicha calabresa con cebolla y papas fritas", fr: "Saucisse calabrese avec oignons et frites", it: "Salsiccia calabrese con cipolle e patatine", de: "Calabrese-Wurst mit Zwiebeln und Pommes", zh: "洋葱卡拉布雷萨香肠配薯条", ja: "玉ねぎ入りカラブレーゼソーセージとフライドポテト", preco: 60.00, emoji: "🌭", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Lula dorê", pt: "Anéis de lula empanados e fritos", en: "Breaded fried squid rings", es: "Anillos de calamar empanizados y fritos", fr: "Anneaux de calamar panés et frits", it: "Anelli di calamaro impanati e fritti", de: "Panierte gebratene Tintenfischringe", zh: "炸鱿鱼圈", ja: "揚げイカリング", preco: 90.00, emoji: "🦑", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Manjubinha", pt: "Manjubinha frita crocante", en: "Crispy fried small fish", es: "Pescadito frito crujiente", fr: "Petit poisson frit croustillant", it: "Pesciolino fritto croccante", de: "Knusprig gebratene kleine Fische", zh: "酥脆炸小鱼", ja: "カリカリ揚げ小魚", preco: 60.00, emoji: "🐟", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Misto do mar", pt: "Camarão, lula e peixe fritos", en: "Mixed fried shrimp, squid and fish", es: "Mixto frito de camarón, calamar y pescado", fr: "Mélange frit de crevettes, calamar et poisson", it: "Misto fritto di gamberi, calamari e pesce", de: "Gemischt gebratene Garnelen, Tintenfisch und Fisch", zh: "炸虾、鱿鱼和鱼", ja: "揚げエビ、イカ、魚の盛り合わせ", preco: 180.00, emoji: "🍤", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Pastel de carne ou queijo (G)", pt: "Pastel grande de carne ou queijo", en: "Large meat or cheese pastry", es: "Empanada grande de carne o queso", fr: "Grand chausson à la viande ou au fromage", it: "Pastello grande di carne o formaggio", de: "Großes Teigtaschen mit Fleisch oder Käse", zh: "大号肉或奶酪馅饼", ja: "大サイズの肉またはチーズパステル", preco: 25.00, emoji: "🥟", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Pastel de camarão (G)", pt: "Pastel grande recheado com camarão", en: "Large shrimp pastry", es: "Empanada grande de camarón", fr: "Grand chausson aux crevettes", it: "Pastello grande di gamberi", de: "Große Teigtasche mit Garnelen", zh: "大号虾馅饼", ja: "大サイズのエビパステル", preco: 35.00, emoji: "🥟", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Quentinha", pt: "Lista de opções sob consulta", en: "List of options upon request", es: "Lista de opciones a consultar", fr: "Liste d'options sur demande", it: "Lista di opzioni su richiesta", de: "Optionsliste auf Anfrage", zh: "选项列表请咨询", ja: "オプションリストはお問い合わせください", preco: 25.00, emoji: "🍱", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Peixe inteiro com batata frita", pt: "Peixe inteiro frito acompanhado de batata frita", en: "Whole fried fish with french fries", es: "Pescado entero frito con papas fritas", fr: "Poisson entier frit avec frites", it: "Pesce intero fritto con patatine", de: "Ganzer gebratener Fisch mit Pommes", zh: "炸全鱼配薯条", ja: "丸ごと揚げ魚とフライドポテト", preco: 150.00, emoji: "🐟", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Picanha", pt: "Picanha grelhada na brasa", en: "Grilled picanha steak", es: "Picanha a la brasa", fr: "Picanha grillée", it: "Picanha alla griglia", de: "Gegrillte Picanha", zh: "炭烤臀肉牛排", ja: "炭火焼きピカーニャ", preco: 150.00, emoji: "🥩", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Sardinha", pt: "Sardinhas fritas crocantes", en: "Crispy fried sardines", es: "Sardinas fritas crujientes", fr: "Sardines frites croustillantes", it: "Sardine fritte croccanti", de: "Knusprig gebratene Sardinen", zh: "酥脆炸沙丁鱼", ja: "カリカリ揚げイワシ", preco: 50.00, emoji: "🐟", img: "", ativo: true },
+  { categoria: "Petiscos", nome: "Tábua de frutos do mar", pt: "Mix completo de frutos do mar", en: "Complete seafood platter", es: "Tabla completa de mariscos", fr: "Plateau complet de fruits de mer", it: "Tagliere completo di frutti di mare", de: "Komplette Meeresfrüchteplatte", zh: "海鲜大拼盘", ja: "シーフード盛り合わせ", preco: 220.00, emoji: "🦞", img: "", ativo: true },
+
+  // ALUGUEL
+  { categoria: "Aluguel", nome: "Cadeira", pt: "Cadeira de praia — unidade", en: "Beach chair — per unit", es: "Silla de playa — unidad", fr: "Chaise de plage — unité", it: "Sedia da spiaggia — unità", de: "Strandstuhl — Stück", zh: "沙滩椅 — 每个", ja: "ビーチチェア — 1個", preco: 10.00, emoji: "🪑", img: "", ativo: true },
+  { categoria: "Aluguel", nome: "Guarda-sol P", pt: "Guarda-sol pequeno — unidade", en: "Small umbrella sun — per unit", es: "Sombrilla pequeña — unidad", fr: "Petit parasol — unité", it: "Ombrellone piccolo — unità", de: "Kleiner Sonnenschirm — Stück", zh: "小阳伞 — 每个", ja: "小型ビーチパラソル — 1個", preco: 15.00, emoji: "⛱️", img: "", ativo: true },
+  { categoria: "Aluguel", nome: "Guarda-sol G", pt: "Guarda-sol grande — unidade", en: "Big umbrella sun — per unit", es: "Sombrilla grande — unidad", fr: "Grand parasol — unité", it: "Ombrellone grande — unità", de: "Großer Sonnenschirm — Stück", zh: "大阳伞 — 每个", ja: "大型ビーチパラソル — 1個", preco: 25.00, emoji: "⛱️", img: "", ativo: true },
+];
+
+let ordemCategorias = ["Bebidas", "Drinks", "Petiscos", "Aluguel"];
+let langAtual = 'pt';
+let pedido = {}; // { idx: quantidade }
+
+const labels = {
+  pt: { esgotado: "Esgotado", pedido: "Fazer pedido", total: "Total", cadeira: "Número da cadeira/mesa", nome: "Seu nome (opcional)", confirmar: "Enviar pedido", cancelar: "Cancelar", confirmacao: "Pedido enviado! Aguarde o atendente." },
+  en: { esgotado: "Sold out", pedido: "Place order", total: "Total", cadeira: "Chair/table number", nome: "Your name (optional)", confirmar: "Send order", cancelar: "Cancel", confirmacao: "Order sent! Please wait for staff." },
+  es: { esgotado: "Agotado", pedido: "Hacer pedido", total: "Total", cadeira: "Número silla/mesa", nome: "Tu nombre (opcional)", confirmar: "Enviar pedido", cancelar: "Cancelar", confirmacao: "¡Pedido enviado! Espera al camarero." },
+  fr: { esgotado: "Épuisé", pedido: "Commander", total: "Total", cadeira: "Numéro chaise/table", nome: "Votre nom (optionnel)", confirmar: "Envoyer commande", cancelar: "Annuler", confirmacao: "Commande envoyée! Patientez." },
+  it: { esgotado: "Esaurito", pedido: "Ordinare", total: "Totale", cadeira: "Numero sedia/tavolo", nome: "Il tuo nome (opzionale)", confirmar: "Invia ordine", cancelar: "Annulla", confirmacao: "Ordine inviato! Attendi." },
+  de: { esgotado: "Ausverkauft", pedido: "Bestellen", total: "Gesamt", cadeira: "Stuhl/Tisch Nummer", nome: "Ihr Name (optional)", confirmar: "Bestellung senden", cancelar: "Abbrechen", confirmacao: "Bestellung gesendet! Bitte warten." },
+  zh: { esgotado: "售罄", pedido: "下单", total: "总计", cadeira: "椅子/桌子号码", nome: "您的姓名（可选）", confirmar: "发送订单", cancelar: "取消", confirmacao: "订单已发送！请等待服务员。" },
+  ja: { esgotado: "売り切れ", pedido: "注文する", total: "合計", cadeira: "椅子/テーブル番号", nome: "お名前（任意）", confirmar: "注文を送信", cancelar: "キャンセル", confirmacao: "注文を送信しました！お待ちください。" },
+};
+
+function setLang(l) {
+  langAtual = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+function toggleProduto(idx) {
+  produtos[idx].ativo = !produtos[idx].ativo;
+  const estados = produtos.map(p => p.ativo);
+  set(ref(db, `${DB_KEY}/produtos`), estados);
+  render();
+}
+
+function adicionarPedido(idx) {
+  pedido[idx] = (pedido[idx] || 0) + 1;
+  atualizarBtnPedido();
+  render();
+}
+
+function removerPedido(idx) {
+  if (pedido[idx]) {
+    pedido[idx]--;
+    if (pedido[idx] <= 0) delete pedido[idx];
+  }
+  atualizarBtnPedido();
+  render();
+}
+
+function atualizarBtnPedido() {
+  const total = Object.values(pedido).reduce((s, q) => s + q, 0);
+  const btn = document.getElementById('btnPedido');
+  document.getElementById('contadorPedido').textContent = total;
+  btn.classList.toggle('show', total > 0);
+}
+
+function abrirModalPedido() {
+  const lista = document.getElementById('listaPedido');
+  let html = '';
+  let totalGeral = 0;
+  Object.keys(pedido).forEach(idx => {
+    const p = produtos[idx];
+    const qtd = pedido[idx];
+    const sub = p.preco * qtd;
+    totalGeral += sub;
+    html += `<div class="item-pedido"><span>${qtd}x ${p.nome}</span><span>R$ ${sub.toFixed(2).replace('.', ',')}</span></div>`;
+  });
+  lista.innerHTML = html;
+  document.getElementById('totalPedido').textContent = `${labels[langAtual].total}: R$ ${totalGeral.toFixed(2).replace('.', ',')}`;
+  document.getElementById('modalPedido').classList.add('show');
+}
+
+function fecharModalPedido() {
+  document.getElementById('modalPedido').classList.remove('show');
+}
+
+function enviarPedido() {
+  const cadeira = document.getElementById('inputCadeira').value.trim();
+  const nome = document.getElementById('inputNome').value.trim() || 'Cliente';
+  if (!cadeira) { alert('Informe o número da cadeira/mesa'); return; }
+
+  const itens = Object.keys(pedido).map(idx => ({
+    nome: produtos[idx].nome,
+    quantidade: pedido[idx],
+    preco: produtos[idx].preco,
+    subtotal: produtos[idx].preco * pedido[idx]
+  }));
+  const total = itens.reduce((s, i) => s + i.subtotal, 0);
+
+  push(ref(db, `${DB_KEY}/pedidos`), {
+    cadeira, nome, itens, total,
+    timestamp: Date.now(),
+    status: 'novo'
+  });
+
+  alert(labels[langAtual].confirmacao);
+  pedido = {};
+  fecharModalPedido();
+  atualizarBtnPedido();
+  render();
+}
+
+function render() {
+  const el = document.getElementById('cardapio');
+  el.innerHTML = '';
+
+  if (isAdmin) document.getElementById('adminBar').classList.add('show');
+
+  ordemCategorias.forEach((categoria, ci) => {
+    const itens = produtos.filter(p => p.categoria === categoria);
+    if (itens.length === 0) return;
+
+    const section = document.createElement('div');
+    section.innerHTML = `<h2 class="categoria-titulo">${categoria}</h2>`;
+
+    itens.forEach((p, i) => {
+      const idx = produtos.indexOf(p);
+      const card = document.createElement('div');
+      card.className = `produto-card ${!p.ativo ? 'inativo' : ''}`;
+      card.style.animationDelay = `${(ci * 3 + i) * 0.03}s`;
+
+      const imgEl = p.img
+        ? `<img class="produto-img" src="${p.img}" alt="${p.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="produto-img-placeholder" style="display:none">${p.emoji}</div>`
+        : `<div class="produto-img-placeholder">${p.emoji}</div>`;
+
+      const precoFormatado = `R$ ${p.preco.toFixed(2).replace('.', ',')}`;
+      const qtdAtual = pedido[idx] || 0;
+
+      let acaoHTML = '';
+      if (isAdmin) {
+        acaoHTML = `<label class="toggle"><input type="checkbox" ${p.ativo ? 'checked' : ''} onchange="toggleProduto(${idx})"><span class="toggle-slider"></span></label>`;
+      } else if (p.ativo) {
+        acaoHTML = qtdAtual > 0
+          ? `<div style="display:flex;align-items:center;gap:6px;"><button class="qtd-btn" onclick="removerPedido(${idx})">−</button><span class="qtd-display">${qtdAtual}</span><button class="qtd-btn" onclick="adicionarPedido(${idx})">+</button></div>`
+          : `<button class="qtd-btn" onclick="adicionarPedido(${idx})" style="width:32px;height:32px;font-size:1.2rem;">+</button>`;
+      }
+
+      const compHTML = langAtual === 'pt'
+        ? `<div class="produto-comp">${p.pt}</div>`
+        : `<div class="produto-comp produto-comp-principal">${p[langAtual]}</div><div class="produto-comp produto-comp-pt">${p.pt}</div>`;
+
+      card.innerHTML = `
+        ${imgEl}
+        <div class="produto-info">
+          <div class="produto-nome">${p.nome}</div>
+          ${compHTML}
+          ${!p.ativo ? `<span class="esgotado">${labels[langAtual].esgotado}</span>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+          <div class="produto-preco">${precoFormatado}</div>
+          ${acaoHTML}
+        </div>
+      `;
+      section.appendChild(card);
+    });
+
+    el.appendChild(section);
+  });
+}
+
+// Firebase — carregar dados
+onValue(ref(db, DB_KEY), (snapshot) => {
+  const data = snapshot.val();
+  if (data) {
+    if (data.produtos) {
+      data.produtos.forEach((ativo, i) => { if (produtos[i]) produtos[i].ativo = ativo; });
+    }
+    if (data.dados) {
+      Object.keys(data.dados).forEach(key => {
+        const idx = parseInt(key);
+        const d = data.dados[key];
+        if (!d) return;
+        if (produtos[idx]) {
+          Object.keys(d).forEach(k => { produtos[idx][k] = d[k]; });
+        } else {
+          produtos[idx] = { ...d, ativo: d.ativo !== undefined ? d.ativo : true };
+        }
+      });
+    }
+    if (data.ordem) ordemCategorias = data.ordem;
+  }
+  render();
+});
+
+// Verificar bloqueio do trial
+onValue(ref(db, 'clientes'), (snapshot) => {
+  const clientes = snapshot.val();
+  if (clientes) {
+    const cliente = Object.values(clientes).find(c => c.link && c.link.includes('point-do-sol'));
+    if (cliente && cliente.bloqueado) {
+      document.getElementById('telaBloqueio').classList.add('show');
+    } else {
+      document.getElementById('telaBloqueio').classList.remove('show');
+    }
+  }
+});
+
+window.setLang = setLang;
+window.toggleProduto = toggleProduto;
+window.adicionarPedido = adicionarPedido;
+window.removerPedido = removerPedido;
+window.abrirModalPedido = abrirModalPedido;
+window.fecharModalPedido = fecharModalPedido;
+window.enviarPedido = enviarPedido;
+</script>
+
+</body>
+</html>
