@@ -2337,12 +2337,11 @@ function esconderBannerTrial() {
   if (b) b.classList.remove('show');
 }
 
-// 🔒 LISTENER DE BLOQUEIO DO ADMIN (manual OU trial vencido)
-onValue(ref(db, 'clientes'), (snapshot) => {
-  const clientes = snapshot.val();
-  if (!clientes) return;
-
-  const cliente = Object.values(clientes).find(c => c.link && c.link.includes(TRIAL_IDENTIFICADOR));
+// 🔒 LISTENER DE BLOQUEIO DO ADMIN (manual OU trial vencido) - lê o
+// espelho reduzido do próprio negócio (não o CRM inteiro, que agora só
+// o super-admin pode ler).
+onValue(ref(db, `${DB_KEY}/bloqueio`), (snapshot) => {
+  const cliente = snapshot.val();
   if (!cliente) return;
 
   let deveBloquear = false;
@@ -2389,10 +2388,8 @@ onValue(ref(db, 'clientes'), (snapshot) => {
   }
 });
 
-onValue(ref(db, 'clientes'), (snapshot) => {
-  const clientes = snapshot.val();
-  if (!clientes) { esconderBannerTrial(); return; }
-  const cliente = Object.values(clientes).find(c => c.link && c.link.includes(TRIAL_IDENTIFICADOR));
+onValue(ref(db, `${DB_KEY}/bloqueio`), (snapshot) => {
+  const cliente = snapshot.val();
   if (!cliente) { esconderBannerTrial(); return; }
   if (!cliente.trialAtivo) { esconderBannerTrial(); return; }
   if (cliente.bloqueado) { esconderBannerTrial(); return; }

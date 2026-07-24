@@ -457,10 +457,8 @@
 
 <!-- Tela de bloqueio (trial expirado) -->
 <div class="tela-bloqueio" id="telaBloqueio">
-  <h2 id="telaBloqueioTitulo">⏰ Período de teste encerrado</h2>
-  <p id="telaBloqueioMensagem">O período de teste gratuito desta barraca foi encerrado. Para continuar utilizando o cardápio digital, entre em contato com o desenvolvedor:</p>
-  <a id="telaBloqueioBotao" href="https://wa.me/5521993109310?text=Ol%C3%A1%20Felipe!%20Sou%20da%20barraca%20Point%20do%20Sol%20103%20e%20quero%20renovar%20meu%20card%C3%A1pio%20digital." target="_blank">💬 Falar com Felipe (Desenvolvedor)</a>
-  <div class="bloqueio-email">f.gomesnascimento@icloud.com</div>
+  <h2 id="telaBloqueioTitulo">🔒 Cardápio indisponível no momento</h2>
+  <p id="telaBloqueioMensagem">Este cardápio digital está temporariamente indisponível. Por favor, fale diretamente com a equipe do local para fazer seu pedido.</p>
 </div>
 
 <header>
@@ -1613,13 +1611,10 @@ onValue(ref(db, `${DB_KEY}/bloqueio`), (snapshot) => {
   const mensagem = document.getElementById('telaBloqueioMensagem');
 
   if (deveBloquear) {
-    if (motivoBloqueio === 'trial_vencido') {
-      titulo.textContent = '⏰ Período de teste encerrado';
-      mensagem.textContent = 'O período de teste gratuito de 30 dias foi encerrado. Para continuar utilizando o cardápio digital, entre em contato com o desenvolvedor:';
-    } else {
-      titulo.textContent = '🔒 Cardápio temporariamente indisponível';
-      mensagem.textContent = 'Este cardápio está temporariamente indisponível. Para mais informações, entre em contato:';
-    }
+    // Mensagem neutra pro cliente final - ele não tem como (nem por que)
+    // resolver pendência de assinatura entre o estabelecimento e a 77 IS.
+    titulo.textContent = '🔒 Cardápio indisponível no momento';
+    mensagem.textContent = 'Este cardápio digital está temporariamente indisponível. Por favor, fale diretamente com a equipe do local para fazer seu pedido.';
     tela.classList.add('show');
   } else {
     tela.classList.remove('show');
